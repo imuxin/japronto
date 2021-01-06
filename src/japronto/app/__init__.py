@@ -262,3 +262,26 @@ class Application:
         self._run(
             host=host, port=port, worker_num=worker_num,
             reloader_pid=reloader_pid, debug=debug)
+
+    def _run_single_process(self, host, port, debug=None):
+        self._debug = debug or self._debug
+        if self._debug and not self._log_request:
+            self._log_request = self._debug
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((host, port))
+        os.set_inheritable(sock.fileno(), True)
+
+        kwargs=dict(sock=sock, host=host, port=port,
+                    reloader_pid=None)
+        self.serve(**kwargs)
+
+        # prevent further operations on socket in parent
+        sock.close()
+
+    def debug(self, host='0.0.0.0', port=8080, debug=False):
+        if os.environ.get('_JAPR_IGNORE_RUN'):
+            return
+
+        self._run_single_process(host=host, port=port, debug=debug)
