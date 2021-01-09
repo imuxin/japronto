@@ -10,6 +10,7 @@ import faulthandler
 import uvloop
 
 from japronto.router import Router, RouteNotFoundException
+from japronto.middleware import Middlewares
 from japronto.protocol.cprotocol import Protocol
 from japronto.protocol.creaper import Reaper
 
@@ -23,6 +24,7 @@ class Application:
     def __init__(self, *, reaper_settings=None, log_request=None,
                  protocol_factory=None, debug=False):
         self._router = None
+        self._middlewares = None
         self._loop = None
         self._connections = set()
         self._reaper_settings = reaper_settings or {}
@@ -45,6 +47,13 @@ class Application:
             self._router = Router()
 
         return self._router
+
+    @property
+    def middlewares(self):
+        if not self._middlewares:
+            self._middlewares = Middlewares(self)
+
+        return self._middlewares
 
     def __finalize(self):
         self.loop

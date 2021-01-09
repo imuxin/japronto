@@ -637,6 +637,7 @@ Protocol_on_body(Protocol* self, char* body, size_t body_len, size_t tail_len)
 #endif
   PyObject* request = NULL;
   PyObject* handler_result = NULL;
+  PyObject* middlewares = NULL;
   MatchDictEntry* entries;
   MatcherEntry* matcher_entry;
   size_t entries_length;
@@ -685,11 +686,23 @@ Protocol_on_body(Protocol* self, char* body, size_t body_len, size_t tail_len)
     goto queue_or_write;
   }
 
-  if(!(handler_result = PyObject_CallFunctionObjArgs(
-       matcher_entry->handler, request, NULL))) {
+  // TODO: Call middleware
+
+  if(!(middlewares = PyObject_GetAttrString(self->app, "middlewares")))
+    goto error;
+
+  if(!(handler_result = PyObject_CallObject(
+       middlewares, PyTuple_Pack(2, matcher_entry->handler, request)))) {
     Protocol_catch_exception(request);
     goto queue_or_write;
   }
+  Py_XDECREF(middlewares);
+
+  // if(!(handler_result = PyObject_CallFunctionObjArgs(
+  //      matcher_entry->handler, request, NULL))) {
+  //   Protocol_catch_exception(request);
+  //   goto queue_or_write;
+  // }
 
   if(matcher_entry->coro_func) {
     if(!Protocol_handle_coro(self, request, handler_result))

@@ -22,10 +22,10 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
 setup(
     name='japronto',
     version=version,
-    url='http://github.com/squeaky-pl/japronto/',
+    url='http://github.com/imuxin/japronto/',
     license='MIT',
-    author='Paweł Piotr Przeradowski',
-    author_email='przeradowski@gmail.com',
+    author='muxin',
+    author_email='chengqinglin@icloud.com',
     description='A HTTP application toolkit and server bundle ' +
                 'based on uvloop and picohttpparser',
     package_dir={'': 'src'},
