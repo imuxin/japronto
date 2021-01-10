@@ -696,7 +696,7 @@ Protocol_on_body(Protocol* self, char* body, size_t body_len, size_t tail_len)
     Protocol_catch_exception(request);
     goto queue_or_write;
   }
-  Py_XDECREF(middlewares);
+  // Py_XDECREF(middlewares);
 
   // if(!(handler_result = PyObject_CallFunctionObjArgs(
   //      matcher_entry->handler, request, NULL))) {

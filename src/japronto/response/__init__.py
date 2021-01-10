@@ -26,3 +26,15 @@ class JsonResponse(Response):
     def __iter__(self):
         for key in self.__slots__:
             yield key, getattr(self, key)
+
+class StreamResponse(Response):
+    __slots__ = ['code', 'body', 'headers', 'cookies']
+    def __init__(self, code=200, body=b'', headers={}, cookies={}) -> None:
+        self.code = code
+        self.body = body
+        self.headers = headers
+        self.cookies = cookies
+
+    def __iter__(self):
+        for key in self.__slots__:
+            yield key, getattr(self, key)

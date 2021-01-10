@@ -1,11 +1,13 @@
 from collections import defaultdict
 import copy
 from functools import wraps
+import sys
+import traceback
 
 from ..common.provider_api import MWProvider
 from ..common import utils
 from .demo import Middleware as Demo
-from ..response import JsonResponse
+from ..response import JsonResponse, StreamResponse, TextResponse
 
 
 ROUTE_SKIP_MW_MAPPING = defaultdict(list)
@@ -20,12 +22,20 @@ def resp_handler(func):
         }
         try:
             resp = func(*args, **kwargs)
-            resp.json.update(**err_body)
+            if isinstance(resp, JsonResponse):
+                resp.json.update(**err_body)
+            if isinstance(resp, StreamResponse):
+                pass
+            if isinstance(resp, TextResponse):
+                pass
         except Exception as e:
             err_body.update(
                 err_code=getattr(e, 'code', 400),
                 err_msg=str(e.args[0])
             )
+            tb = traceback.format_exception(None, e, e.__traceback__)
+            tb = ''.join(tb)
+            print(tb, file=sys.stderr, end='')
             resp = JsonResponse(json=err_body)
         req = args[2]
         return req.Response(**dict(resp))
