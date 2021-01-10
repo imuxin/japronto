@@ -1,0 +1,95 @@
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+# Copied from openstack-keystone
+
+
+class ProviderAPIRegistry(object):
+    __shared_object_state = {}
+    __registry = {}
+    __iter__ = __registry.__iter__
+    __getitem__ = __registry.__getitem__
+    locked = False
+
+    def __init__(self):
+        # NOTE(morgan): This rebinds __dict__ and allows all instances of
+        # the provider API to share a common state. Any changes except
+        # rebinding __dict__ will maintain the same state stored on the class
+        # not the instance. This design pattern is preferable to
+        # full singletons where state sharing is the important "feature"
+        # derived from the "singleton"
+        #
+        # Use "super" to bypass the __setattr__ preventing changes to the
+        # object itself.
+        super(ProviderAPIRegistry, self).__setattr__(
+            '__dict__', self.__shared_object_state)
+
+    def __getattr__(self, item):
+        """Do attr lookup."""
+        try:
+            return self.__registry[item]
+        except KeyError:
+            raise AttributeError(
+                "'%s' has no attribute %s" % (self.__class__.__name__, item))
+
+    def __setattr__(self, key, value):
+        """Do not allow setting values on the registry object."""
+        raise RuntimeError('Programming Error: You may not set values on the '
+                           'ProviderAPIRegistry objects.')
+
+    def _register_provider_api(self, name, obj):
+        """Register an instance of a class as a provider api."""
+        if name == 'driver':
+            raise ValueError('A provider may not be named "driver".')
+
+        if self.locked:
+            raise RuntimeError(
+                'Programming Error: The provider api registry has been '
+                'locked (post configuration). Ensure all provider api '
+                'managers are instantiated before locking.')
+
+        if name in self.__registry:
+            raise DuplicateProviderError(
+                '`%(name)s` has already been registered as an api '
+                'provider by `%(prov)r`' % {'name': name,
+                                            'prov': self.__registry[name]})
+        self.__registry[name] = obj
+
+    def _clear_registry_instances(self):
+        """ONLY USED FOR TESTING."""
+        self.__registry.clear()
+        # Use super to allow setting around class implementation of __setattr__
+        super(ProviderAPIRegistry, self).__setattr__('locked', False)
+
+    def lock_provider_registry(self):
+        # Use super to allow setting around class implementation of __setattr__
+        super(ProviderAPIRegistry, self).__setattr__('locked', True)
+
+
+class DuplicateProviderError(Exception):
+    """Attempting to register a duplicate API provider."""
+
+
+class MWProviderMixin(object):
+    """Allow referencing provider apis on self via __getattr__.
+
+    Be sure this class is first in the class definition for inheritance.
+    """
+
+    def __getattr__(self, item):
+        """Magic getattr method."""
+        try:
+            return getattr(MWProvider, item)
+        except AttributeError:
+            return self.__getattribute__(item)
+
+
+MWProvider = ProviderAPIRegistry()

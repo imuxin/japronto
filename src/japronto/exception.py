@@ -43,6 +43,7 @@ class InternalServerError(Error):
     code = int(http.client.INTERNAL_SERVER_ERROR)
     title = http.client.responses[http.client.INTERNAL_SERVER_ERROR]
 
+
 class NotImplemented(Error):
     message_format = ("The action you have requested has not"
                       " been implemented.")

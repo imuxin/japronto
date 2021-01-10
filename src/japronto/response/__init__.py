@@ -1,6 +1,3 @@
-from japronto.exception import Error
-
-
 class Response(object):
     __slots__ = []
 

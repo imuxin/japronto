@@ -1,9 +1,10 @@
-import urllib.parse
-from json import loads as json_loads
 import cgi
-import encodings.idna
 import collections
+import encodings.idna
+from functools import wraps
 from http.cookies import _unquote as unquote_cookie
+from json import loads as json_loads
+import urllib.parse
 
 
 class HttpRequest(object):
@@ -29,6 +30,7 @@ class HttpRequest(object):
 
 
 def memoize(func):
+    @wraps(func)
     def wrapper(request):
         ns = request.extra.setdefault('_japronto', {})
         try:
